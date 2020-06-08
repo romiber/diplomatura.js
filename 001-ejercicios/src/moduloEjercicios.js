@@ -78,18 +78,83 @@ export const materiasAprobadasByNombreAlumno = (nombreAlumno) => {
  * @param {string} nombreUniversidad
  */
 export const expandirInfoUniversidadByNombre = (nombreUniversidad) => {
+  // identifico la universidad
   let uni = basededatos.universidades.find((universidad)=>universidad.nombre===nombreUniversidad);
+  
+  // obtengo las materias asociadas
+  uni.materias = materiasByUni(uni.id); // Creo una propiedad para alojar las materias de la uni
+
+  // obtengo los profesores asociados a las materias de la uni
+  uni.profesores = profesoresByMaterias(uni.materias); // Creo una propiedad para alojar los profesores de la uni
+
+  // obtengo los alumnos asociados
+  uni.alumnos = alumnosByMaterias(uni.materias); // Creo una propiedad para alojar los alumnos de la uni
+
+
+  return {uni};
+};
+
+const materiasByUni = (universidadId) =>
+{
   let materias = [];
   for (let i=0; i<basededatos.materias.length; i++)
   {
-    if (basededatos.materias[i].universidad === uni.id)
-    {
+    if (basededatos.materias[i].universidad === universidadId)
       materias.push(basededatos.materias[i]);
+  }
+  return materias;
+}
+
+
+const profesoresByMaterias = (materias) =>
+{
+  let profesores = [];
+  let profeTemp;
+
+  // recorro las materias de la uni
+  for (let i=0; i<materias.length; i++)
+  {
+    // recorro los profes de la materia
+    for (let j=0; j<materias[i].profesores.length; j++)
+    {
+      // por cada profe verifico si no existe ya en el array que retornaré así evito los duplicados
+      profeTemp = basededatos.profesores.find((profesor)=>profesor.id === materias[i].profesores[j]);
+      if (profesores.indexOf(profeTemp) === -1)
+      {
+          profesores.push(profeTemp);
+      }
     }
   }
-  uni.materias = materias;
-  return {uni};
-};
+  return profesores;
+}
+
+
+const alumnosByMaterias = (materias) =>
+{
+  let alumnos = [];
+  let calificacionesTemp = [];
+  let alumnoTemp;
+
+  // recorro las materias de la uni
+  for (let i=0; i<materias.length; i++)
+  {
+    calificacionesTemp = basededatos.calificaciones.filter((calificacion)=>calificacion.materia === materias[i].id)
+    // console.log("Calificaciones de la materia " + materias[i].nombre + ": ");
+    // console.log(calificacionesTemp)
+    // recorro las calificaciones de la materia para sacar los alumnos
+    for (let j=0; j<calificacionesTemp.length; j++)
+    {
+      // por cada calificacion verifico si el alumno no existe ya en el array que retornaré así evito los duplicados
+      alumnoTemp = basededatos.alumnos.find((alumno)=>alumno.id === calificacionesTemp[j].alumno);
+      if (alumnos.indexOf(alumnoTemp) === -1)
+      {
+          alumnos.push(alumnoTemp);
+          // console.log("Alumno: "+ alumnoTemp.nombre + " se agrega dentro de la lista: " + alumnos);
+      } 
+    }
+  }
+  return alumnos;
+}
 
 // /**
 //  * Devuelve el promedio de edad de los alumnos.
